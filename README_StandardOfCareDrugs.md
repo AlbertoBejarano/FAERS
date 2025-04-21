@@ -1,4 +1,3 @@
-"""
 Standard of Care Drugs for the 10 Most Common Cancers
 ------------------------------------------------------
 
