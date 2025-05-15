@@ -1,6 +1,10 @@
 # 00_openFDA_AEs_Data_v03
 # Author: Alberto Bejarano (2025)
-# This script retrieves adverse event data from the FDA Open API for a list of drugs
+# This script queries the FDA Adverse Event Reporting System (FAERS) API to retrieve and analyze adverse events associated
+#with a curated list of drugs, including synonyms defined in a dictionary. It handles batching, safe retries, and structured
+#parsing of seriousness outcomes (e.g., death, hospitalization). The results are normalized, aggregated by drug and adverse
+#event, and saved to a CSV file for downstream analysis. The script also supports testing via hardcoded drug inputs, outputs
+#summary statistics, and optionally plays a notification chime upon completion.
 
 import requests, os, time
 from datetime import datetime
