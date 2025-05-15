@@ -1,10 +1,10 @@
 # 00_openFDA_AEs_Data_v03
 # Author: Alberto Bejarano (2025)
 # This script queries the FDA Adverse Event Reporting System (FAERS) API to retrieve and analyze adverse events associated
-#with a curated list of drugs, including synonyms defined in a dictionary. It handles batching, safe retries, and structured
-#parsing of seriousness outcomes (e.g., death, hospitalization). The results are normalized, aggregated by drug and adverse
-#event, and saved to a CSV file for downstream analysis. The script also supports testing via hardcoded drug inputs, outputs
-#summary statistics, and optionally plays a notification chime upon completion.
+# with a curated list of drugs, including synonyms defined in a dictionary. It handles batching, safe retries, and structured
+# parsing of seriousness outcomes (e.g., death, hospitalization). The results are normalized, aggregated by drug and adverse
+# event, and saved to a CSV file for downstream analysis. The script also supports testing via hardcoded drug inputs, outputs
+# summary statistics, and optionally plays a notification chime upon completion.
 
 import requests, os, time
 from datetime import datetime
@@ -35,29 +35,11 @@ aes_output_file = "./data/AEs_drugs_of_interest.csv"
 nested_list = []
 dictionary_df = pd.read_excel(drug_dict_file_path)
 for _, row in dictionary_df.iterrows():
-    drug_name = row['Drug_Name'].strip().replace('\xa0', "")
+    drug_name = row['Drug_Name'].strip().replace('\xa0', "").lower()
     other_names = []
     if pd.notna(row['Other_Drug_Names']):
-        other_names = [name.strip().replace('\xa0', "") for name in row['Other_Drug_Names'].split(', ')]
+        other_names = [name.strip().replace('\xa0', "").lower() for name in row['Other_Drug_Names'].split(', ')]
     nested_list.append([drug_name] + other_names)
-
-# Read drugs of interest
-with open(input_drug_list_file_path, 'r') as file:
-    drugs_of_interest = [line.strip() for line in file.readlines()]
-
-# Extend terms
-drugs_of_interest_extended = []
-for drug in drugs_of_interest:
-    for sublist in nested_list:
-        if drug in sublist:
-            drugs_of_interest_extended.extend(sublist)
-            break
-
-# Overwrite for testing
-print('\nOriginal:', len(drugs_of_interest), drugs_of_interest)
-drugs_of_interest_extended = ['5-FU', '5-Fu', 'S-fu', 'Fluorouracil', '5-fluorouracil']
-drugs_of_interest_extended = ['S-FU', 'Fluorouracil']
-print('\nExtended:', len(drugs_of_interest_extended), drugs_of_interest_extended)
 
 # === TEST MODE ===
 use_test_values = True  # Toggle this
@@ -87,15 +69,6 @@ else:
 
 print(f"\nOriginal drugs: {drugs_of_interest}")
 print(f"Extended drugs: {drugs_of_interest_extended}")
-
-
-
-
-
-# Write to output
-with open(output_drug_list_file_path, 'w') as file:
-    for term in drugs_of_interest_extended:
-        file.write(f"{term}\n")
 
 # Safe request function
 def safe_request(api_fda_url, params, retries=3, delay=1):
@@ -150,14 +123,6 @@ df['Drug_Name'] = df['Drug_Name'].str.title()
 df['Adverse_Event'] = df['Adverse_Event'].str.title()
 
 # Normalize names
-nested_list = []
-for _, row in dictionary_df.iterrows():
-    drug_name = row['Drug_Name'].strip().replace('\xa0', "").lower()
-    other_names = []
-    if pd.notna(row['Other_Drug_Names']):
-        other_names = [name.strip().replace('\xa0', "").lower() for name in row['Other_Drug_Names'].split(', ')]
-    nested_list.append([drug_name] + other_names)
-
 alias_to_primary = {}
 for sublist in nested_list:
     primary = sublist[0]
@@ -169,7 +134,7 @@ unique_drugs = df['Drug_Name'].unique().tolist()
 print(f"\nUnique drug names after alias replacement: {set(unique_drugs)}")
 
 # Differences
-diff = [item for item in drugs_of_interest_extended if alias_to_primary.get(item.lower(), item.lower().title()) not in unique_drugs]
+diff = [item for item in drugs_of_interest_extended if alias_to_primary.get(item.lower(), item.lower()) not in unique_drugs]
 if diff:
     print(f"\n\033[32mUnmapped drugs:\033[0m {', '.join(sorted(diff))}")
 
